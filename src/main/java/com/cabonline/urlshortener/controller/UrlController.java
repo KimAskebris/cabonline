@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 @RestController
 public class UrlController {
@@ -21,11 +22,15 @@ public class UrlController {
 
     @GetMapping("/url-shortener/{shortUrl}")
     public ResponseEntity<?> redirect(@PathVariable String shortUrl) {
-        UrlShortener urlShortener = urlService.redirect(shortUrl);
-        HttpHeaders httpHeaders = new HttpHeaders();
-        trySetLocation(httpHeaders, urlShortener);
+        Optional<UrlShortener> urlShortener = urlService.redirect(shortUrl);
 
-        return new ResponseEntity<>(urlShortener.shortUrl(), httpHeaders, HttpStatus.MOVED_PERMANENTLY);
+        if (urlShortener.isPresent()) {
+            HttpHeaders httpHeaders = new HttpHeaders();
+            trySetLocation(httpHeaders, urlShortener.get());
+            return new ResponseEntity<>(urlShortener.get().shortUrl(), httpHeaders, HttpStatus.MOVED_PERMANENTLY);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @PostMapping("/url-shortener")
